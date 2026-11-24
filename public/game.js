@@ -8,8 +8,6 @@
   const MINI = 20;                       // 미리보기 셀 크기
   const LINE_SCORE = [0, 100, 300, 500, 800];
   const MAX_DT = 100;                    // 탭 복귀 시 프레임 폭주 방지 (ms)
-  const LOCK_DELAY = 450;                // 바닥 접지 후 고정까지 유예 (ms)
-  const MAX_LOCK_RESETS = 15;            // 무한 회전으로 고정 회피 방지
   const REPEAT_DELAY = 160, REPEAT_RATE = 50;   // 터치 버튼 연속 입력
   const STORAGE_KEY = 'blockfall.best.v1';
 
@@ -54,7 +52,7 @@
     piece: null, queue: [], bag: [],
     hold: 0, canHold: true,
     score: 0, lines: 0, level: 1, best: loadBest(),
-    gravityAcc: 0, lockAcc: 0, lockResets: 0,
+    gravityAcc: 0,
     dirty: true,
   };
 
@@ -119,7 +117,7 @@
     Object.assign(s, {
       queue: [], bag: [], hold: 0, canHold: true,
       score: 0, lines: 0, level: 1,
-      gravityAcc: 0, lockAcc: 0, lockResets: 0,
+      gravityAcc: 0,
     });
     while (s.queue.length < 3) s.queue.push(nextId());
     spawn();
@@ -128,8 +126,7 @@
   function spawn(id) {
     if (id === undefined) { id = s.queue.shift(); s.queue.push(nextId()); }
     s.piece = makePiece(id);
-    s.lockAcc = 0;
-    s.lockResets = 0;
+    s.gravityAcc = 0;
     if (collide(s.piece.m, s.piece.x, s.piece.y)) gameOver();
     s.dirty = true;
   }
@@ -160,11 +157,8 @@
   }
 
   function onMoved() {
-    if (s.lockAcc > 0 && s.lockResets < MAX_LOCK_RESETS) {   // 접지 중 조작 → 유예 리셋(횟수 제한)
-      s.lockAcc = 0;
-      s.lockResets++;
-    }
     s.dirty = true;
+    if (grounded()) lock();                                  // 닿는 즉시 고정 (유예 없음)
   }
 
   function hardDrop() {
@@ -377,15 +371,16 @@
     last = now;
 
     if (s.status === 'running') {
-      if (grounded()) {
-        s.lockAcc += dt;
-        if (s.lockAcc >= LOCK_DELAY) { lock(); s.dirty = true; }
+      if (grounded()) {                                      // 스폰·홀드 직후 이미 닿아 있는 경우
+        lock();
+        s.dirty = true;
       } else {
-        s.lockAcc = 0;
         s.gravityAcc += dt;
         const g = gravityMs();
-        while (s.gravityAcc >= g && !grounded()) { s.gravityAcc -= g; s.piece.y++; s.dirty = true; }
-        if (grounded()) s.gravityAcc = 0;
+        if (s.gravityAcc >= g) {
+          s.gravityAcc %= g;
+          tryMove(0, 1);                                     // 한 칸 낙하 → 닿으면 onMoved에서 즉시 고정
+        }
       }
     }
 
