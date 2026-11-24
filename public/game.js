@@ -32,7 +32,7 @@
     ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down',
     ArrowUp: 'rotateCW', KeyX: 'rotateCW', KeyZ: 'rotateCCW',
     Space: 'drop', KeyC: 'hold', ShiftLeft: 'hold', ShiftRight: 'hold',
-    KeyP: 'pause', Escape: 'pause', Enter: 'start',
+    Escape: 'pause', KeyP: 'pause', Enter: 'start',
   };
   const NO_REPEAT = new Set(['rotateCW', 'rotateCCW', 'drop', 'hold', 'pause', 'start']);
 
@@ -209,6 +209,7 @@
 
   function gameOver() {
     s.status = 'over';
+    disarmBackGuard();
     if (s.score > s.best) { s.best = s.score; saveBest(); }
     showOverlay(`GAME OVER\n${s.score.toLocaleString()}점`, '다시 하기');
     s.dirty = true;
@@ -240,6 +241,7 @@
     s.status = 'running';
     ui.overlay.hidden = true;
     last = performance.now();
+    armBackGuard();
   }
 
   function togglePause() {
@@ -250,8 +252,32 @@
       s.status = 'running';
       ui.overlay.hidden = true;
       last = performance.now();
+      armBackGuard();
     }
   }
+
+  // 뒤로가기(모바일 뒤로 버튼·제스처) = 일시정지.
+  // 플레이 중에만 같은 URL로 히스토리 1칸을 쌓아 두고, 뒤로가기가 그 칸을 소비하면 일시정지.
+  // 일시정지 상태에서 한 번 더 누르면 원래대로 사이트를 벗어남.
+  let backGuard = false;
+
+  function armBackGuard() {
+    if (backGuard) return;                                   // 중복 push로 히스토리 오염 방지
+    history.pushState({ blockfall: true }, '');
+    backGuard = true;
+  }
+
+  function disarmBackGuard() {
+    if (!backGuard) return;
+    backGuard = false;
+    history.back();                                          // 쌓아 둔 칸 회수 → 다음 뒤로가기는 정상 이탈
+  }
+
+  window.addEventListener('popstate', () => {
+    if (!backGuard) return;
+    backGuard = false;
+    if (s.status === 'running') togglePause();
+  });
 
   function showOverlay(msg, btn) {
     ui.msg.textContent = msg;                                // textContent → XSS 경로 없음
