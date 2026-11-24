@@ -107,22 +107,30 @@ button {
 #start-btn { background: var(--accent); border: 0; padding: 10px 26px; font-weight: 700; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* 터치 컨트롤: 터치 기기에서만 노출 */
+/* 터치 컨트롤: 십자 배열, 터치 기기에서만 노출 */
 .touch {
+  --btn: 68px;
   display: none;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  width: 100%;
-  max-width: 420px;
+  grid-template: repeat(3, var(--btn)) / repeat(3, var(--btn));
+  grid-template-areas:
+    ".    rot   ."
+    "left .     right"
+    ".    down  .";
+  gap: 6px;
   touch-action: none;
 }
-.touch button { height: 52px; font-size: 20px; }
-.touch button:active { background: var(--line); }
+.touch button { font-size: 26px; border-radius: 16px; }
+.touch button:active { background: var(--line); transform: scale(.94); }
+.t-rot   { grid-area: rot; }
+.t-left  { grid-area: left; }
+.t-right { grid-area: right; }
+.t-down  { grid-area: down; }
 
 @media (pointer: coarse) {
   .touch { display: grid; }
   .keys { display: none; }
-  #board { height: min(600px, 58svh, (100vw - 32px - 2 * var(--side) - 2 * var(--gap)) * 2); }
+  /* 십자 패드(3×68px + 여백) 높이만큼 보드를 줄여 한 화면에 들어오게 */
+  #board { height: min(600px, 100svh - 330px, (100vw - 32px - 2 * var(--side) - 2 * var(--gap)) * 2); }
 }
 
 @media (max-width: 560px) {
@@ -133,3 +141,13 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 }
 
 .link { color: var(--accent); }
+
+/* 키 작은 폰(iPhone SE 등): 사이드 패널이 보드보다 길어지지 않게 압축 */
+@media (pointer: coarse) and (max-height: 700px) {
+  .app { gap: 8px; padding-block: 10px; }
+  .logo { font-size: 18px; }
+  .panel { gap: 8px; }
+  .stats dt { font-size: 9px; }
+  .stats dd { font-size: 13px; margin-bottom: 2px; }
+  .touch { --btn: 60px; }
+}

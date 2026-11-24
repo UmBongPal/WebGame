@@ -55,14 +55,10 @@
     </section>
 
     <nav class="touch" aria-label="터치 조작">
-      <button type="button" data-action="hold">홀드</button>
-      <button type="button" data-action="rotateCCW">↺</button>
-      <button type="button" data-action="rotateCW">↻</button>
-      <button type="button" data-action="pause">Ⅱ</button>
-      <button type="button" data-action="left" data-repeat>←</button>
-      <button type="button" data-action="down" data-repeat>↓</button>
-      <button type="button" data-action="right" data-repeat>→</button>
-      <button type="button" data-action="drop">⤓</button>
+      <button type="button" class="t-rot" data-action="rotateCW" aria-label="회전">↻</button>
+      <button type="button" class="t-left" data-action="left" data-repeat aria-label="왼쪽">←</button>
+      <button type="button" class="t-right" data-action="right" data-repeat aria-label="오른쪽">→</button>
+      <button type="button" class="t-down" data-action="down" data-repeat aria-label="빠르게 내려가기">↓</button>
     </nav>
   </main>
 </body>
